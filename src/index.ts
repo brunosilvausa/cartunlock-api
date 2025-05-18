@@ -11,28 +11,38 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const SESSION_DURATIONS = {
+  quick: 1,
+  extended: 4,
+  premium: 8,
+} as const
+
 app.post("/create-session", async (req, res) => {
   const { user_id, site } = req.body
 
-  if (!user_id || !site) {
-    return res.status(400).json({ error: "Missing user_id or site" })
+  if (!user_id || !site || !(site in SESSION_DURATIONS)) {
+    return res.status(400).json({ error: "Missing or invalid user_id or site" })
   }
 
-  const fakeSessionUrl = `https://session.cartunlock.com/${site}-${Date.now()}`
+  const durationHours = SESSION_DURATIONS[site as keyof typeof SESSION_DURATIONS]
+  const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000)
+
+  const session_url = `https://session.cartunlock.com/${site}-${Date.now()}`
 
   const { error } = await supabase.from("sessions").insert([
     {
       user_id,
       site,
-      session_url: fakeSessionUrl,
+      session_url,
       status: "active",
-      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      expires_at,
+      proxy_region: "US",
     },
   ])
 
   if (error) return res.status(500).json({ error })
 
-  return res.json({ session_url: fakeSessionUrl })
+  return res.status(200).json({ session_url })
 })
 
 app.get("/", (req, res) => {
