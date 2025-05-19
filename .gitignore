@@ -19,3 +19,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# out dir
+# ⚠️ Comentado para permitir deploy do Vite no backend Express
+# dist/
