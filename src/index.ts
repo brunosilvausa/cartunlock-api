@@ -53,6 +53,15 @@ app.post("/create-session", async (req, res) => {
   return res.status(200).json({ session_url })
 })
 
+// ✅ Serve frontend build do React
+const distPath = path.resolve(__dirname, "../dist")
+app.use(express.static(distPath))
+
+// ✅ Fallback SPA (React Router)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"))
+})
+
 const port = process.env.PORT || 3000
 app.listen(port, () => {
   console.log(`API listening on port ${port}`)
