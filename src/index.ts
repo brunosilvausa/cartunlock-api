@@ -1,38 +1,35 @@
-import express from "express";
-import cors from "cors";
-import path from "path";
-import { createClient } from "@supabase/supabase-js";
+import express from "express"
+import cors from "cors"
+import path from "path"
+import { createClient } from "@supabase/supabase-js"
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// (Opcional) Serve arquivos estáticos se você estiver hospedando o frontend junto aqui
-app.use(express.static(path.join(__dirname, "../public"))); // ajuste para "dist" se necessário
+const app = express()
+app.use(cors())
+app.use(express.json())
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+)
 
 const SESSION_DURATIONS = {
   quick: 1,
   extended: 4,
   premium: 8,
-} as const;
+} as const
 
 app.post("/create-session", async (req, res) => {
-  const { user_id, site } = req.body;
+  const { user_id, site } = req.body
 
   if (!user_id || !site || !(site in SESSION_DURATIONS)) {
-    return res.status(400).json({ error: "Missing or invalid user_id or site" });
+    return res.status(400).json({ error: "Missing or invalid user_id or site" })
   }
 
-  const durationHours = SESSION_DURATIONS[site as keyof typeof SESSION_DURATIONS];
-  const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+  const durationHours = SESSION_DURATIONS[site as keyof typeof SESSION_DURATIONS]
+  const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000)
 
-  const slug = `${site}-${Date.now()}`;
-  const session_url = `https://cartunlock.com/${slug}`;
+  const slug = `${site}-${Date.now()}`
+  const session_url = `https://cartunlock.com/${slug}`
 
   const { error } = await supabase.from("sessions").insert([
     {
@@ -44,23 +41,23 @@ app.post("/create-session", async (req, res) => {
       expires_at,
       proxy_region: "US",
     },
-  ]);
+  ])
 
-  if (error) return res.status(500).json({ error });
+  if (error) return res.status(500).json({ error })
 
-  return res.status(200).json({ session_url });
-});
+  return res.status(200).json({ session_url })
+})
 
-app.get("/", (req, res) => {
-  res.send("CartUnlock API online.");
-});
+// 🔽 Serve arquivos estáticos do frontend
+const distPath = path.join(__dirname, "../dist")
+app.use(express.static(distPath))
 
-// ✅ Fallback para React Router SPA
+// 🔁 Fallback para React Router (SPA)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html")); // ajuste para "dist/index.html" se for outra pasta
-});
+  res.sendFile(path.join(distPath, "index.html"))
+})
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000
 app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
-});
+  console.log(`API listening on port ${port}`)
+})
