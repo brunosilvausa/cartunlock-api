@@ -53,15 +53,6 @@ app.post("/create-session", async (req, res) => {
   return res.status(200).json({ session_url })
 })
 
-// ✅ Caminho correto para servir /dist (está 1 nível acima de src/)
-const distPath = path.resolve(__dirname, "../dist")
-app.use(express.static(distPath))
-
-// ✅ Fallback SPA
-app.get("*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"))
-})
-
 const port = process.env.PORT || 3000
 app.listen(port, () => {
   console.log(`API listening on port ${port}`)
