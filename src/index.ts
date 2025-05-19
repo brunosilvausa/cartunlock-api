@@ -1,11 +1,16 @@
 import express from "express"
 import cors from "cors"
 import path from "path"
+import { fileURLToPath } from "url"
 import { createClient } from "@supabase/supabase-js"
 
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+// Corrigir __dirname para ESM
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -48,11 +53,11 @@ app.post("/create-session", async (req, res) => {
   return res.status(200).json({ session_url })
 })
 
-// 🔽 Serve arquivos estáticos do frontend
-const distPath = path.join(__dirname, "../dist")
+// 🔽 Serve arquivos estáticos do frontend (dist fora da src/)
+const distPath = path.join(__dirname, "../../dist")
 app.use(express.static(distPath))
 
-// 🔁 Fallback para React Router (SPA)
+// 🔁 Fallback SPA para React Router
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"))
 })
