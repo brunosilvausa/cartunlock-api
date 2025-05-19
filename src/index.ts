@@ -27,12 +27,14 @@ app.post("/create-session", async (req, res) => {
   const durationHours = SESSION_DURATIONS[site as keyof typeof SESSION_DURATIONS]
   const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000)
 
-  const session_url = `https://session.cartunlock.com/${site}-${Date.now()}`
+  const slug = `${site}-${Date.now()}`
+  const session_url = `https://cartunlock.com/${slug}`
 
   const { error } = await supabase.from("sessions").insert([
     {
       user_id,
       site,
+      slug,
       session_url,
       status: "active",
       expires_at,
