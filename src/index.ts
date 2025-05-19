@@ -7,8 +7,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve arquivos estáticos do frontend (React build)
-app.use(express.static(path.join(__dirname, "../public"))); // ajuste se sua pasta for "dist" ou "build"
+// (Opcional) Serve arquivos estáticos se você estiver hospedando o frontend junto aqui
+app.use(express.static(path.join(__dirname, "../public"))); // ajuste para "dist" se necessário
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -55,9 +55,9 @@ app.get("/", (req, res) => {
   res.send("CartUnlock API online.");
 });
 
-// ✅ Fallback: redireciona todas as outras rotas para o React
+// ✅ Fallback para React Router SPA
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html")); // ajuste para dist/build se necessário
+  res.sendFile(path.join(__dirname, "../public/index.html")); // ajuste para "dist/index.html" se for outra pasta
 });
 
 const port = process.env.PORT || 3000;
