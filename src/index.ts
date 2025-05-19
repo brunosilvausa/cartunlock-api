@@ -53,11 +53,11 @@ app.post("/create-session", async (req, res) => {
   return res.status(200).json({ session_url })
 })
 
-// ✅ Serve arquivos estáticos do frontend (dist fora de /src)
-const distPath = path.resolve(__dirname, "../../dist")
+// ✅ Caminho correto para servir /dist (está 1 nível acima de src/)
+const distPath = path.resolve(__dirname, "../dist")
 app.use(express.static(distPath))
 
-// ✅ Fallback SPA para React Router
+// ✅ Fallback SPA
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"))
 })
