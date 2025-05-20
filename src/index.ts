@@ -3,6 +3,7 @@ import cors from "cors"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createClient } from "@supabase/supabase-js"
+import fetch from "node-fetch" // ✅ Import para Browserless
 
 const app = express()
 app.use(cors())
@@ -34,7 +35,7 @@ app.post("/create-session", async (req, res) => {
   const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000)
 
   const slug = `${site}-${Date.now()}`
-  const session_url = `https://cartunlock.com/${slug}`;
+  const session_url = `https://cartunlock.com/${slug}`
 
   const { error } = await supabase.from("sessions").insert([
     {
@@ -49,6 +50,22 @@ app.post("/create-session", async (req, res) => {
   ])
 
   if (error) return res.status(500).json({ error })
+
+  // ✅ Abre sessão remota via Browserless
+  try {
+    const browserlessRes = await fetch(`https://chrome.browserless.io/content?token=2SLM329DVn7AQ0A233d287ac89eb8f6ebdf4fa389c1f72344`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: session_url }),
+    })
+
+    if (!browserlessRes.ok) {
+      const message = await browserlessRes.text()
+      console.error("❌ Erro ao abrir aba remota no Browserless:", message)
+    }
+  } catch (err) {
+    console.error("❌ Erro inesperado ao chamar o Browserless:", err)
+  }
 
   return res.status(200).json({ session_url })
 })
