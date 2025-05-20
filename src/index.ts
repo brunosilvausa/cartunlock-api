@@ -4,6 +4,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
+
+// 🧠 Importa a função de sessão remota via Browserless
+import { iniciarSessaoRemota } from "./browserlessSession.js";
 
 const app = express();
 app.use(cors());
@@ -23,9 +28,30 @@ const SESSION_DURATIONS = {
   premium: 8,
 } as const;
 
-const BROWSERLESS_TOKEN = "2SLM329DVn7AQ0A233d287ac89eb8f6ebdf4fa389c1f72344";
-const BROWSERLESS_URL = "https://chrome.browserless.io";
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN!;
+const BROWSERLESS_URL = process.env.BROWSERLESS_URL!;
 
+// 🔵 NOVA ROTA: Iniciar sessão remota via Browserless
+app.post("/api/sessao", async (req, res) => {
+  const { url } = req.body;
+
+  if (!url || !url.startsWith("http")) {
+    return res.status(400).json({ message: "URL inválida" });
+  }
+
+  try {
+    const html = await iniciarSessaoRemota(url);
+    if (html) {
+      return res.status(200).json({ html });
+    } else {
+      return res.status(500).json({ message: "Erro ao renderizar página" });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: "Erro inesperado", error: err });
+  }
+});
+
+// 🔁 Criar sessão e salvar no Supabase
 app.post("/create-session", async (req, res) => {
   const { user_id, site } = req.body;
 
@@ -53,7 +79,7 @@ app.post("/create-session", async (req, res) => {
 
   if (error) return res.status(500).json({ error });
 
-  // 🔁 Teste automático da URL com Browserless
+  // Testa a URL com Browserless
   try {
     const response = await fetch(`${BROWSERLESS_URL}/content?token=${BROWSERLESS_TOKEN}`, {
       method: "POST",
