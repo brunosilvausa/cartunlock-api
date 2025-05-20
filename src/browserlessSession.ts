@@ -32,9 +32,10 @@ export const iniciarSessaoRemota = async (targetUrl: string): Promise<string | n
     });
 
     if (!response.ok) {
-      console.error("Erro ao iniciar sessão remota:", await response.text());
-      return null;
-    }
+     const errorText = await response.text();
+     console.error("Erro Browserless:", response.status, errorText);
+     return null;
+  }
 
     return await response.text();
   } catch (error) {
