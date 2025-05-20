@@ -3,8 +3,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
-import fetchPkg from "node-fetch";
-const fetch = (fetchPkg as any).default || fetchPkg;
+import fetch from "node-fetch";
 
 const app = express();
 app.use(cors());
