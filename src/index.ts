@@ -7,9 +7,6 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
-// 🧠 Importa a função de sessão remota via Browserless
-import { iniciarSessaoRemota } from "./browserlessSession.js";
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -28,31 +25,8 @@ const SESSION_DURATIONS = {
   premium: 8,
 } as const;
 
-const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN!;
-const BROWSERLESS_URL = process.env.BROWSERLESS_URL!;
-
-// 🔵 NOVA ROTA: Iniciar sessão remota via Browserless
-app.post("/api/sessao", async (req, res) => {
-  const { url } = req.body;
-
-  if (!url || !url.startsWith("http")) {
-    return res.status(400).json({ message: "URL inválida" });
-  }
-
-  try {
-    const html = await iniciarSessaoRemota(url);
-    if (html) {
-      return res.status(200).json({ html });
-    } else {
-      return res.status(500).json({ message: "Erro ao renderizar página" });
-    }
-  } catch (err) {
-    return res.status(500).json({ message: "Erro inesperado", error: err });
-  }
-});
-
-// 🔁 Criar sessão e salvar no Supabase
-app.post("/create-session", async (req, res) => {
+// 🔁 Criar sessão via VPS (Docker) e salvar no Supabase
+app.post("/api/create-session", async (req, res) => {
   const { user_id, site } = req.body;
 
   if (!user_id || !site || !(site in SESSION_DURATIONS)) {
@@ -62,39 +36,44 @@ app.post("/create-session", async (req, res) => {
   const durationHours = SESSION_DURATIONS[site as keyof typeof SESSION_DURATIONS];
   const expires_at = new Date(Date.now() + durationHours * 60 * 60 * 1000);
 
-  const slug = `${site}-${Date.now()}`;
-  const session_url = `https://cartunlock.com/${slug}`;
-
-  const { error } = await supabase.from("sessions").insert([
-    {
-      user_id,
-      site,
-      slug,
-      session_url,
-      status: "active",
-      expires_at,
-      proxy_region: "US",
-    },
-  ]);
-
-  if (error) return res.status(500).json({ error });
-
-  // Testa a URL com Browserless
+  // 🔌 Chama a API do VPS para iniciar container
   try {
-    const response = await fetch(`${BROWSERLESS_URL}/content?token=${BROWSERLESS_TOKEN}`, {
+    const vpsResponse = await fetch("http://31.97.15.103:4000/start-session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: session_url }),
     });
 
-    if (!response.ok) {
-      console.error("Erro no Browserless:", await response.text());
+    if (!vpsResponse.ok) {
+      console.error("Erro ao chamar VPS:", await vpsResponse.text());
+      return res.status(500).json({ error: "Erro ao iniciar sessão no VPS" });
     }
-  } catch (err) {
-    console.error("Erro inesperado ao testar Browserless:", err);
-  }
 
-  return res.status(200).json({ session_url });
+    const { url } = await vpsResponse.json();
+
+    const slug = `${site}-${Date.now()}`;
+    const session_url = url;
+
+    const { error } = await supabase.from("sessions").insert([
+      {
+        user_id,
+        site,
+        slug,
+        session_url,
+        status: "active",
+        expires_at,
+        proxy_region: "US",
+      },
+    ]);
+
+    if (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+      return res.status(500).json({ error });
+    }
+
+    return res.status(200).json({ session_url });
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+    return res.status(500).json({ error: "Erro ao criar sessão remota" });
+  }
 });
 
 // ✅ Serve frontend build do React
