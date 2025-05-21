@@ -85,7 +85,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-const port = process.env.PORT || 4000;
+const port = Number(process.env.PORT) || 4000;
 app.listen(port, "0.0.0.0", () => {
   console.log(`API listening on port ${port}`);
 });
