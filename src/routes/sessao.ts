@@ -16,15 +16,15 @@ router.post("/create-session", async (req, res) => {
   }
 
   try {
-    // 🔐 Usa subdomínio HTTPS fixo
+    // 🔐 Sessão com subdomínio fixo
     const subdomain = "sessao1.cartunlock.com";
     const session_url = `https://${subdomain}`;
     const slug = `${site}-${Date.now()}`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
-    console.log("✅ Criando sessão para:", user_id);
-    console.log("🌐 URL:", session_url);
+    console.log("📥 Recebido:", { user_id, site });
     console.log("🔖 Slug:", slug);
+    console.log("🌍 URL:", session_url);
 
     const { error } = await supabase.from("sessions").insert([
       {
@@ -39,14 +39,16 @@ router.post("/create-session", async (req, res) => {
     ]);
 
     if (error) {
-      console.error("❌ Erro Supabase:", error);
-      return res.status(500).json({ error: "Erro ao salvar no Supabase" });
+      console.error("❌ Erro ao salvar sessão no Supabase:", error);
+      return res.status(500).json({ error: "Erro ao salvar sessão no banco" });
     }
 
-    return res.status(200).json({ session_url, slug }); // ✅ Resposta final
+    console.log("✅ Sessão criada com sucesso:", { slug, session_url });
+
+    return res.status(200).json({ session_url, slug });
   } catch (err) {
-    console.error("❌ Erro inesperado:", err);
-    return res.status(500).json({ error: "Erro ao criar sessão remota" });
+    console.error("❌ Erro inesperado ao criar sessão:", err);
+    return res.status(500).json({ error: "Erro interno ao criar sessão" });
   }
 });
 
