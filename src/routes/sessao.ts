@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
@@ -17,26 +16,13 @@ router.post("/create-session", async (req, res) => {
   }
 
   try {
-    // 🔌 Chama VPS local para iniciar container
-    const response = await fetch("http://31.97.15.103:4000/start-session", {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Erro no VPS:", text);
-      throw new Error("Erro ao chamar VPS");
-    }
-
-    const { porta } = await response.json(); // 👈 recebemos a porta, mas não vamos usá-la no URL exposto
-
-    // 🔐 Substitui IP por subdomínio HTTPS fixo
+    // 🔐 Usa subdomínio fixo com HTTPS
     const subdomain = "sessao1.cartunlock.com";
     const session_url = `https://${subdomain}`;
-
     const slug = `${site}-${Date.now()}`;
-    const expires_at = new Date(Date.now() + 60 * 60 * 1000);
+    const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
+    // ✅ Salva sessão no Supabase
     const { error } = await supabase.from("sessions").insert([
       {
         user_id,
@@ -54,6 +40,7 @@ router.post("/create-session", async (req, res) => {
       return res.status(500).json({ error });
     }
 
+    // ✅ Retorna para o frontend
     return res.status(200).json({ session_url, slug });
   } catch (err) {
     console.error("Erro:", err);
