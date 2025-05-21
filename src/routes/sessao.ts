@@ -1,4 +1,5 @@
 import express from "express";
+import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
@@ -16,15 +17,31 @@ router.post("/create-session", async (req, res) => {
   }
 
   try {
-    // 🔐 Sessão com subdomínio fixo
-    const subdomain = "sessao1.cartunlock.com";
-    const session_url = `https://${subdomain}`;
+    console.log("📥 Recebido:", { user_id, site });
+
+    // ✅ Chamada HTTPS segura para iniciar sessão no VPS
+    const VPS_URL = "https://sessao1.cartunlock.com/start-session";
+    console.log("🌐 Chamando VPS:", VPS_URL);
+
+    const response = await fetch(VPS_URL, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("❌ Erro na resposta da VPS:", text);
+      return res.status(500).json({ error: "Erro ao chamar o servidor VPS" });
+    }
+
+    const { porta } = await response.json();
+    console.log("📦 Porta retornada pela VPS:", porta);
+
     const slug = `${site}-${Date.now()}`;
+    const session_url = `https://sessao1.cartunlock.com`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
-    console.log("📥 Recebido:", { user_id, site });
     console.log("🔖 Slug:", slug);
-    console.log("🌍 URL:", session_url);
+    console.log("🌍 URL da sessão:", session_url);
 
     const { error } = await supabase.from("sessions").insert([
       {
