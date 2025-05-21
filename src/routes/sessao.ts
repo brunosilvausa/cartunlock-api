@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
@@ -17,26 +16,16 @@ router.post("/create-session", async (req, res) => {
   }
 
   try {
-    // ✅ Chamada HTTPS para seu VPS protegido via subdomínio
-    const response = await fetch("https://sessao1.cartunlock.com/start-session", {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Erro no VPS:", text);
-      throw new Error("Erro ao chamar o VPS para iniciar sessão");
-    }
-
-    const { porta } = await response.json();
-
-    // ✅ Usa subdomínio fixo com HTTPS (não usa IP nem porta)
-    const session_url = `https://sessao1.cartunlock.com`;
-
+    // 🔐 Usa subdomínio HTTPS fixo
+    const subdomain = "sessao1.cartunlock.com";
+    const session_url = `https://${subdomain}`;
     const slug = `${site}-${Date.now()}`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
-    // ✅ Salva no Supabase
+    console.log("✅ Criando sessão para:", user_id);
+    console.log("🌐 URL:", session_url);
+    console.log("🔖 Slug:", slug);
+
     const { error } = await supabase.from("sessions").insert([
       {
         user_id,
@@ -50,13 +39,13 @@ router.post("/create-session", async (req, res) => {
     ]);
 
     if (error) {
-      console.error("Erro Supabase:", error);
-      return res.status(500).json({ error });
+      console.error("❌ Erro Supabase:", error);
+      return res.status(500).json({ error: "Erro ao salvar no Supabase" });
     }
 
-    return res.status(200).json({ session_url, slug });
+    return res.status(200).json({ session_url, slug }); // ✅ Resposta final
   } catch (err) {
-    console.error("Erro:", err);
+    console.error("❌ Erro inesperado:", err);
     return res.status(500).json({ error: "Erro ao criar sessão remota" });
   }
 });
