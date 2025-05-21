@@ -69,7 +69,7 @@ app.post("/api/create-session", async (req, res) => {
       return res.status(500).json({ error });
     }
 
-    return res.status(200).json({ session_url });
+    return res.status(200).json({ session_url, slug });
   } catch (err) {
     console.error("Erro inesperado:", err);
     return res.status(500).json({ error: "Erro ao criar sessão remota" });
