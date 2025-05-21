@@ -86,6 +86,6 @@ app.get("*", (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
+app.listen(4000, "0.0.0.0", () => {
+  console.log("API rodando na porta 4000");
 });
