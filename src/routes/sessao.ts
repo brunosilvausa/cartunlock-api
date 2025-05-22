@@ -36,7 +36,7 @@ router.post("/create-session", async (req, res) => {
 
     // 🔧 Usa subdomínio + porta dinâmica
     const slug = `${site}-${Date.now()}`;
-    const session_url = `https://sessao1.cartunlock.com:${porta}`;
+    const session_url = `https://sessao1.cartunlock.com/session/${porta}`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
     console.log("🔖 Slug:", slug);
