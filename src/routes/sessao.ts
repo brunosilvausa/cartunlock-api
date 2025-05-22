@@ -19,7 +19,6 @@ router.post("/create-session", async (req, res) => {
   try {
     console.log("📥 Recebido:", { user_id, site });
 
-    // 🔁 Chama o launcher para iniciar a sessão e obter a porta
     const VPS_URL = "https://sessao1.cartunlock.com/start-session";
     console.log("🌐 Chamando VPS:", VPS_URL);
 
@@ -34,9 +33,9 @@ router.post("/create-session", async (req, res) => {
     const { porta } = await response.json();
     console.log("📦 Porta retornada pela VPS:", porta);
 
-    // 🔧 Usa subdomínio + porta dinâmica
+    // ✅ Usa a porta dinâmica corretamente
+    const session_url = `https://sessao1.cartunlock.com:${porta}`;
     const slug = `${site}-${Date.now()}`;
-    const session_url = `https://sessao1.cartunlock.com/session/${porta}`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
     console.log("🔖 Slug:", slug);
@@ -60,7 +59,6 @@ router.post("/create-session", async (req, res) => {
     }
 
     console.log("✅ Sessão criada com sucesso:", { slug, session_url });
-
     return res.status(200).json({ session_url, slug });
   } catch (err) {
     console.error("❌ Erro inesperado ao criar sessão:", err);
