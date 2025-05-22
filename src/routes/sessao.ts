@@ -19,13 +19,11 @@ router.post("/create-session", async (req, res) => {
   try {
     console.log("📥 Recebido:", { user_id, site });
 
-    // ✅ Chamada HTTPS segura para iniciar sessão no VPS
+    // 🔁 Chama o launcher para iniciar a sessão e obter a porta
     const VPS_URL = "https://sessao1.cartunlock.com/start-session";
     console.log("🌐 Chamando VPS:", VPS_URL);
 
-    const response = await fetch(VPS_URL, {
-      method: "POST",
-    });
+    const response = await fetch(VPS_URL, { method: "POST" });
 
     if (!response.ok) {
       const text = await response.text();
@@ -36,8 +34,9 @@ router.post("/create-session", async (req, res) => {
     const { porta } = await response.json();
     console.log("📦 Porta retornada pela VPS:", porta);
 
+    // 🔧 Usa subdomínio + porta dinâmica
     const slug = `${site}-${Date.now()}`;
-    const session_url = `https://sessao1.cartunlock.com`;
+    const session_url = `https://sessao1.cartunlock.com:${porta}`;
     const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
     console.log("🔖 Slug:", slug);
